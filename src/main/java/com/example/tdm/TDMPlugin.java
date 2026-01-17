@@ -19,10 +19,10 @@ public class TDMPlugin extends JavaPlugin {
     protected void setup() {
         getLogger().at(Level.INFO).log("TDM Plugin loading...");
 
-        // Register the /loadout command
+        // Register the /tdm command
         getCommandRegistry().registerCommand(new LoadoutCommand());
 
-        getLogger().at(Level.INFO).log("TDM Plugin loaded - use /loadout to open gear menu");
+        getLogger().at(Level.INFO).log("TDM Plugin loaded - use /tdm to join a team");
     }
 
     public static TDMPlugin get() {

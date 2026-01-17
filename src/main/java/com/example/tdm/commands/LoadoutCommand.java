@@ -14,7 +14,7 @@ import javax.annotation.Nonnull;
 public class LoadoutCommand extends AbstractPlayerCommand {
 
     public LoadoutCommand() {
-        super("loadout", "Opens the loadout selection menu");
+        super("tdm", "Opens the TDM team selection menu");
     }
 
     @Override
