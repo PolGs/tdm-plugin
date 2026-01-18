@@ -4,6 +4,10 @@ import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.math.vector.Vector3d;
 import com.hypixel.hytale.server.core.Message;
+import com.hypixel.hytale.server.core.entity.entities.Player;
+import com.hypixel.hytale.server.core.inventory.Inventory;
+import com.hypixel.hytale.server.core.inventory.ItemStack;
+import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.Universe;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
@@ -11,8 +15,11 @@ import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+import java.util.logging.Logger;
 
 public class TeamManager {
+
+    private static final Logger LOGGER = Logger.getLogger("TDM-TeamManager");
 
     public enum Team {
         RED, BLUE
@@ -39,7 +46,7 @@ public class TeamManager {
     public static void joinTeam(PlayerRef playerRef, Store<EntityStore> store, Ref<EntityStore> ref, Team team) {
         UUID playerId = playerRef.getUuid();
 
-        System.out.println("[TDM-DEBUG] joinTeam called - player: " + playerRef.getUsername() + ", team: " + team);
+        LOGGER.info("[DEBUG] joinTeam called - player: " + playerRef.getUsername() + ", team: " + team);
 
         // Remove from any existing team
         redTeam.remove(playerId);
@@ -52,6 +59,15 @@ public class TeamManager {
             blueTeam.add(playerId);
         }
 
+        // Clear inventory and give team gear
+        Player player = (Player) store.getComponent(ref, Player.getComponentType());
+        if (player != null) {
+            clearAndEquip(player, team);
+            LOGGER.info("[DEBUG] Cleared inventory and equipped gear for " + playerRef.getUsername());
+        } else {
+            LOGGER.warning("[DEBUG] Could not get Player component for " + playerRef.getUsername());
+        }
+
         // Notify player
         String teamName = (team == Team.RED) ? "RED" : "BLUE";
         playerRef.sendMessage(Message.raw("You joined the " + teamName + " team!"));
@@ -61,7 +77,7 @@ public class TeamManager {
 
         // Teleport to TDM world at team spawn
         Vector3d spawn = (team == Team.RED) ? RED_SPAWN : BLUE_SPAWN;
-        System.out.println("[TDM-DEBUG] Teleporting to spawn: " + spawn);
+        LOGGER.info("[DEBUG] Teleporting to spawn: " + spawn);
         WorldUtil.teleportToTDM(playerRef, store, ref, spawn);
     }
 
@@ -229,5 +245,46 @@ public class TeamManager {
     public static void resetKills() {
         redKills = 0;
         blueKills = 0;
+    }
+
+    /**
+     * Clear inventory and equip team gear
+     */
+    private static void clearAndEquip(Player player, Team team) {
+        Inventory inventory = player.getInventory();
+        inventory.clear();
+
+        ItemContainer hotbar = inventory.getHotbar();
+        ItemContainer armor = inventory.getArmor();
+
+        // === ARMOR ===
+        // Head - team specific
+        if (team == Team.RED) {
+            armor.addItemStack(new ItemStack("Armor_Cloth_Cotton_Head", 1));
+        } else {
+            armor.addItemStack(new ItemStack("Armor_Wool_Head", 1));
+        }
+        // Body armor - same for all
+        armor.addItemStack(new ItemStack("Armor_Steel_Chest", 1));
+        armor.addItemStack(new ItemStack("Armor_Steel_Hands", 1));
+        armor.addItemStack(new ItemStack("Armor_Steel_Legs", 1));
+
+        // === WEAPONS ===
+        hotbar.addItemStack(new ItemStack("Weapon_Longsword_Iron", 1));
+        hotbar.addItemStack(new ItemStack("Weapon_Shortbow_Iron", 1));
+
+        // Shield - team specific
+        if (team == Team.RED) {
+            hotbar.addItemStack(new ItemStack("Weapon_Shield_Copper", 1));
+        } else {
+            hotbar.addItemStack(new ItemStack("Weapon_Shield_Doomed", 1));
+        }
+
+        // === CONSUMABLES ===
+        hotbar.addItemStack(new ItemStack("Potion_Health_Large", 10));
+        hotbar.addItemStack(new ItemStack("Weapon_Arrow_Crude", 100));
+        hotbar.addItemStack(new ItemStack("Food_Pie_Apple", 25));
+
+        LOGGER.info("[DEBUG] Equipped " + team + " team gear");
     }
 }
