@@ -7,7 +7,7 @@ Group {
   Label {
     Text: "TEAM DEATHMATCH";
     Anchor: (Height: 20);
-    Style: (FontSize: 11, TextColor: #888888, HorizontalAlignment: Center, LetterSpacing: 1);
+    Style: (FontSize: 11, TextColor: #888888, LetterSpacing: 1);
   }
 
   Group { Anchor: (Height: 8); }
@@ -19,7 +19,7 @@ Group {
     Label {
       Text: "RED";
       Anchor: (Width: 60);
-      Style: (FontSize: 14, TextColor: #ff4444, RenderBold: true, VerticalAlignment: Center);
+      Style: (FontSize: 14, TextColor: #ff4444, RenderBold: true);
     }
 
     Group { FlexWeight: 1; }
@@ -27,7 +27,7 @@ Group {
     Label #RedKills {
       Text: "0";
       Anchor: (Width: 50);
-      Style: (FontSize: 20, TextColor: #ff4444, RenderBold: true, HorizontalAlignment: Right, VerticalAlignment: Center);
+      Style: (FontSize: 20, TextColor: #ff4444, RenderBold: true);
     }
   }
 
@@ -38,7 +38,7 @@ Group {
     Label {
       Text: "BLUE";
       Anchor: (Width: 60);
-      Style: (FontSize: 14, TextColor: #4444ff, RenderBold: true, VerticalAlignment: Center);
+      Style: (FontSize: 14, TextColor: #4444ff, RenderBold: true);
     }
 
     Group { FlexWeight: 1; }
@@ -46,7 +46,7 @@ Group {
     Label #BlueKills {
       Text: "0";
       Anchor: (Width: 50);
-      Style: (FontSize: 20, TextColor: #4444ff, RenderBold: true, HorizontalAlignment: Right, VerticalAlignment: Center);
+      Style: (FontSize: 20, TextColor: #4444ff, RenderBold: true);
     }
   }
 
@@ -56,6 +56,6 @@ Group {
   Label #ServerIP {
     Text: "fctc.hytaleservers.space";
     Anchor: (Height: 16);
-    Style: (FontSize: 10, TextColor: #666666, HorizontalAlignment: Center);
+    Style: (FontSize: 10, TextColor: #666666);
   }
 }
