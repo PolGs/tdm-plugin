@@ -39,6 +39,8 @@ public class TeamManager {
     public static void joinTeam(PlayerRef playerRef, Store<EntityStore> store, Ref<EntityStore> ref, Team team) {
         UUID playerId = playerRef.getUuid();
 
+        System.out.println("[TDM-DEBUG] joinTeam called - player: " + playerRef.getUsername() + ", team: " + team);
+
         // Remove from any existing team
         redTeam.remove(playerId);
         blueTeam.remove(playerId);
@@ -59,7 +61,8 @@ public class TeamManager {
 
         // Teleport to TDM world at team spawn
         Vector3d spawn = (team == Team.RED) ? RED_SPAWN : BLUE_SPAWN;
-        WorldUtil.teleportToTDM(playerRef, spawn);
+        System.out.println("[TDM-DEBUG] Teleporting to spawn: " + spawn);
+        WorldUtil.teleportToTDM(playerRef, store, ref, spawn);
     }
 
     /**
