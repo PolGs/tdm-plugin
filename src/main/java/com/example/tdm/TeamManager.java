@@ -3,15 +3,9 @@ package com.example.tdm;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.math.vector.Vector3d;
-import com.hypixel.hytale.math.vector.Vector3f;
 import com.hypixel.hytale.server.core.Message;
-import com.hypixel.hytale.server.core.entity.entities.Player;
-import com.hypixel.hytale.server.core.inventory.Inventory;
-import com.hypixel.hytale.server.core.inventory.ItemStack;
-import com.hypixel.hytale.server.core.inventory.container.ItemContainer;
-import com.hypixel.hytale.server.core.modules.entity.teleport.Teleport;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
-import com.hypixel.hytale.server.core.universe.world.World;
+import com.hypixel.hytale.server.core.universe.Universe;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 
 import java.util.HashSet;
@@ -24,13 +18,20 @@ public class TeamManager {
         RED, BLUE
     }
 
-    // Team spawn locations
-    private static final Vector3d RED_SPAWN = new Vector3d(844, 116, 577);
-    private static final Vector3d BLUE_SPAWN = new Vector3d(779, 116, 578);
+    // Team spawn locations in tdm2 world
+    private static final Vector3d RED_SPAWN = new Vector3d(56, 56, 23);
+    private static final Vector3d BLUE_SPAWN = new Vector3d(56, 56, 73);
+
+    // Win condition
+    private static final int KILLS_TO_WIN = 50;
 
     // Track players on each team
     private static final Set<UUID> redTeam = new HashSet<>();
     private static final Set<UUID> blueTeam = new HashSet<>();
+
+    // Kill counters
+    private static int redKills = 0;
+    private static int blueKills = 0;
 
     /**
      * Join a specific team
@@ -49,8 +50,16 @@ public class TeamManager {
             blueTeam.add(playerId);
         }
 
-        // Spawn the player
-        spawnPlayer(playerRef, store, ref, team);
+        // Notify player
+        String teamName = (team == Team.RED) ? "RED" : "BLUE";
+        playerRef.sendMessage(Message.raw("You joined the " + teamName + " team!"));
+
+        // Show scoreboard HUD
+        ScoreboardHud.showToPlayer(playerRef);
+
+        // Teleport to TDM world at team spawn
+        Vector3d spawn = (team == Team.RED) ? RED_SPAWN : BLUE_SPAWN;
+        WorldUtil.teleportToTDM(playerRef, spawn);
     }
 
     /**
@@ -71,7 +80,7 @@ public class TeamManager {
     }
 
     /**
-     * Remove player from their team (on disconnect)
+     * Remove player from their team (on disconnect or /back)
      */
     public static void removePlayer(UUID playerId) {
         redTeam.remove(playerId);
@@ -79,86 +88,107 @@ public class TeamManager {
     }
 
     /**
-     * Respawn a player on their current team
+     * Process a kill event
+     * @param killerUuid The player who got the kill
+     * @param victimUuid The player who died
      */
-    public static void respawnPlayer(PlayerRef playerRef, Store<EntityStore> store, Ref<EntityStore> ref) {
+    public static void processKill(UUID killerUuid, UUID victimUuid) {
+        Team killerTeam = getTeam(killerUuid);
+        Team victimTeam = getTeam(victimUuid);
+
+        if (killerTeam == null || victimTeam == null) return;
+
+        if (killerTeam != victimTeam) {
+            // Enemy kill = +1
+            if (killerTeam == Team.RED) {
+                redKills++;
+            } else {
+                blueKills++;
+            }
+        } else {
+            // Friendly fire = -1
+            if (killerTeam == Team.RED) {
+                redKills = Math.max(0, redKills - 1);
+            } else {
+                blueKills = Math.max(0, blueKills - 1);
+            }
+        }
+
+        // Update HUD for all players
+        ScoreboardHud.updateAllPlayers();
+
+        // Check win condition
+        checkWinCondition();
+    }
+
+    /**
+     * Check if a team has won
+     */
+    private static void checkWinCondition() {
+        Team winner = null;
+
+        if (redKills >= KILLS_TO_WIN) {
+            winner = Team.RED;
+        } else if (blueKills >= KILLS_TO_WIN) {
+            winner = Team.BLUE;
+        }
+
+        if (winner != null) {
+            announceWinner(winner);
+            endMatch();
+        }
+    }
+
+    /**
+     * Announce the winner to all players
+     */
+    private static void announceWinner(Team winner) {
+        String winnerName = (winner == Team.RED) ? "RED" : "BLUE";
+        String message = winnerName + " TEAM WINS! Final Score: Red " + redKills + " - Blue " + blueKills;
+
+        for (PlayerRef playerRef : Universe.get().getPlayers()) {
+            if (getTeam(playerRef.getUuid()) != null) {
+                playerRef.sendMessage(Message.raw(message));
+            }
+        }
+    }
+
+    /**
+     * End the match - teleport everyone to lobby and reset
+     */
+    private static void endMatch() {
+        // Teleport all TDM players to lobby
+        for (PlayerRef playerRef : Universe.get().getPlayers()) {
+            UUID playerId = playerRef.getUuid();
+            if (getTeam(playerId) != null) {
+                ScoreboardHud.hideFromPlayer(playerRef);
+                WorldUtil.teleportToLobby(playerRef);
+            }
+        }
+
+        // Clear teams and reset kills
+        redTeam.clear();
+        blueTeam.clear();
+        redKills = 0;
+        blueKills = 0;
+    }
+
+    /**
+     * Get spawn position for a team
+     */
+    public static Vector3d getSpawn(Team team) {
+        return (team == Team.RED) ? RED_SPAWN : BLUE_SPAWN;
+    }
+
+    /**
+     * Respawn a player on their current team (after death)
+     */
+    public static void respawnPlayer(PlayerRef playerRef) {
         Team team = getTeam(playerRef.getUuid());
         if (team != null) {
-            spawnPlayer(playerRef, store, ref, team);
+            Vector3d spawn = getSpawn(team);
+            WorldUtil.teleportToTDM(playerRef, spawn);
         }
-    }
-
-    /**
-     * Spawn a player with their team's gear
-     */
-    private static void spawnPlayer(PlayerRef playerRef, Store<EntityStore> store, Ref<EntityStore> ref, Team team) {
-        Player player = (Player) store.getComponent(ref, Player.getComponentType());
-        if (player == null) return;
-
-        // Clear inventory and give gear
-        clearAndEquip(player, team);
-
-        // Teleport to team spawn
-        Vector3d spawn = (team == Team.RED) ? RED_SPAWN : BLUE_SPAWN;
-        teleportPlayer(player, spawn, ref);
-
-        // Notify player
-        String teamName = (team == Team.RED) ? "RED" : "BLUE";
-        playerRef.sendMessage(Message.raw("You joined the " + teamName + " team!"));
-    }
-
-    /**
-     * Clear inventory and equip team gear
-     */
-    private static void clearAndEquip(Player player, Team team) {
-        Inventory inventory = player.getInventory();
-        inventory.clear();
-
-        ItemContainer hotbar = inventory.getHotbar();
-        ItemContainer armor = inventory.getArmor();
-
-        // === ARMOR ===
-        // Head - team specific
-        if (team == Team.RED) {
-            armor.addItemStack(new ItemStack("Armor_Cloth_Cotton_Head", 1));
-        } else {
-            armor.addItemStack(new ItemStack("Armor_Wool_Head", 1));
-        }
-        // Body armor - same for all
-        armor.addItemStack(new ItemStack("Armor_Steel_Chest", 1));
-        armor.addItemStack(new ItemStack("Armor_Steel_Hands", 1));
-        armor.addItemStack(new ItemStack("Armor_Steel_Legs", 1));
-
-        // === WEAPONS ===
-        hotbar.addItemStack(new ItemStack("Weapon_Longsword_Iron", 1));
-        hotbar.addItemStack(new ItemStack("Weapon_Shortbow_Iron", 1));
-
-        // Shield - team specific
-        if (team == Team.RED) {
-            hotbar.addItemStack(new ItemStack("Weapon_Shield_Copper", 1));
-        } else {
-            hotbar.addItemStack(new ItemStack("Weapon_Shield_Doomed", 1));
-        }
-
-        // === CONSUMABLES ===
-        hotbar.addItemStack(new ItemStack("Potion_Health_Large", 10));
-        hotbar.addItemStack(new ItemStack("Weapon_Arrow_Crude", 100));
-        hotbar.addItemStack(new ItemStack("Food_Pie_Apple", 25));
-    }
-
-    /**
-     * Teleport player to position
-     */
-    private static void teleportPlayer(Player player, Vector3d position, Ref<EntityStore> ref) {
-        World world = player.getWorld();
-        if (world == null) return;
-
-        world.execute(() -> {
-            if (ref == null) return;
-            Store<EntityStore> store = ref.getStore();
-            Teleport teleport = new Teleport(position, new Vector3f(0, 0, 0));
-            store.addComponent(ref, Teleport.getComponentType(), teleport);
-        });
     }
 
     public static int getRedCount() {
@@ -167,5 +197,21 @@ public class TeamManager {
 
     public static int getBlueCount() {
         return blueTeam.size();
+    }
+
+    public static int getRedKills() {
+        return redKills;
+    }
+
+    public static int getBlueKills() {
+        return blueKills;
+    }
+
+    /**
+     * Reset kills (for new match)
+     */
+    public static void resetKills() {
+        redKills = 0;
+        blueKills = 0;
     }
 }

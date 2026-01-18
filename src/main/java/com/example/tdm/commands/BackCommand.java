@@ -1,20 +1,21 @@
 package com.example.tdm.commands;
 
-import com.example.tdm.pages.LoadoutPage;
+import com.example.tdm.TeamManager;
+import com.example.tdm.WorldUtil;
 import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
+import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.command.system.CommandContext;
 import com.hypixel.hytale.server.core.command.system.basecommands.AbstractPlayerCommand;
-import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import javax.annotation.Nonnull;
 
-public class LoadoutCommand extends AbstractPlayerCommand {
+public class BackCommand extends AbstractPlayerCommand {
 
-    public LoadoutCommand() {
-        super("menu", "Opens the TDM team selection menu");
+    public BackCommand() {
+        super("back", "Return to the lobby");
     }
 
     @Override
@@ -25,8 +26,11 @@ public class LoadoutCommand extends AbstractPlayerCommand {
         @Nonnull PlayerRef playerRef,
         @Nonnull World world
     ) {
-        Player player = (Player) store.getComponent(ref, Player.getComponentType());
-        LoadoutPage page = new LoadoutPage(playerRef);
-        player.getPageManager().openCustomPage(ref, store, page);
+        // Remove from team
+        TeamManager.removePlayer(playerRef.getUuid());
+
+        // Teleport to lobby world
+        WorldUtil.teleportToWorld(playerRef, "lobby");
+        playerRef.sendMessage(Message.raw("Returning to lobby..."));
     }
 }

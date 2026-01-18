@@ -1,0 +1,61 @@
+Group {
+  Anchor: (Right: 20, Top: 100, Width: 180, Height: 140);
+  Background: #0a0a0a(0.85);
+  LayoutMode: Top;
+  Padding: (Full: 12);
+
+  Label {
+    Text: "TEAM DEATHMATCH";
+    Anchor: (Height: 20);
+    Style: (FontSize: 11, TextColor: #888888, HorizontalAlignment: Center, LetterSpacing: 1);
+  }
+
+  Group { Anchor: (Height: 8); }
+
+  Group {
+    LayoutMode: Left;
+    Anchor: (Height: 28);
+
+    Label {
+      Text: "RED";
+      Anchor: (Width: 60);
+      Style: (FontSize: 14, TextColor: #ff4444, RenderBold: true, VerticalAlignment: Center);
+    }
+
+    Group { FlexWeight: 1; }
+
+    Label #RedKills {
+      Text: "0";
+      Anchor: (Width: 50);
+      Style: (FontSize: 20, TextColor: #ff4444, RenderBold: true, HorizontalAlignment: Right, VerticalAlignment: Center);
+    }
+  }
+
+  Group {
+    LayoutMode: Left;
+    Anchor: (Height: 28);
+
+    Label {
+      Text: "BLUE";
+      Anchor: (Width: 60);
+      Style: (FontSize: 14, TextColor: #4444ff, RenderBold: true, VerticalAlignment: Center);
+    }
+
+    Group { FlexWeight: 1; }
+
+    Label #BlueKills {
+      Text: "0";
+      Anchor: (Width: 50);
+      Style: (FontSize: 20, TextColor: #4444ff, RenderBold: true, HorizontalAlignment: Right, VerticalAlignment: Center);
+    }
+  }
+
+  Group { Anchor: (Height: 1); Background: #333333; }
+  Group { Anchor: (Height: 8); }
+
+  Label #ServerIP {
+    Text: "fctc.hytaleservers.space";
+    Anchor: (Height: 16);
+    Style: (FontSize: 10, TextColor: #666666, HorizontalAlignment: Center);
+  }
+}
