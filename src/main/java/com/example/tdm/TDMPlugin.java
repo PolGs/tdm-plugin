@@ -2,6 +2,7 @@ package com.example.tdm;
 
 import com.example.tdm.commands.BackCommand;
 import com.example.tdm.commands.LoadoutCommand;
+import com.example.tdm.commands.ServerInfoCommand;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
 import javax.annotation.Nonnull;
@@ -23,10 +24,12 @@ public class TDMPlugin extends JavaPlugin {
         // Register commands
         getCommandRegistry().registerCommand(new LoadoutCommand());
         getCommandRegistry().registerCommand(new BackCommand());
+        getCommandRegistry().registerCommand(new ServerInfoCommand());
 
         getLogger().at(Level.INFO).log("TDM Plugin loaded!");
         getLogger().at(Level.INFO).log("  /menu - Open team selection");
         getLogger().at(Level.INFO).log("  /back - Return to lobby");
+        getLogger().at(Level.INFO).log("  /serverinfo - Show server info");
     }
 
     public static TDMPlugin get() {

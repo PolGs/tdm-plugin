@@ -19,8 +19,8 @@ public class TeamManager {
     }
 
     // Team spawn locations in tdm2 world
-    private static final Vector3d RED_SPAWN = new Vector3d(56, 56, 23);
-    private static final Vector3d BLUE_SPAWN = new Vector3d(56, 56, 73);
+    private static final Vector3d RED_SPAWN = new Vector3d(55, 56, 23);
+    private static final Vector3d BLUE_SPAWN = new Vector3d(55, 56, 74);
 
     // Win condition
     private static final int KILLS_TO_WIN = 50;
@@ -54,8 +54,8 @@ public class TeamManager {
         String teamName = (team == Team.RED) ? "RED" : "BLUE";
         playerRef.sendMessage(Message.raw("You joined the " + teamName + " team!"));
 
-        // Show scoreboard HUD
-        ScoreboardHud.showToPlayer(playerRef);
+        // Announce current score
+        announceScore(playerRef);
 
         // Teleport to TDM world at team spawn
         Vector3d spawn = (team == Team.RED) ? RED_SPAWN : BLUE_SPAWN;
@@ -89,8 +89,6 @@ public class TeamManager {
 
     /**
      * Process a kill event
-     * @param killerUuid The player who got the kill
-     * @param victimUuid The player who died
      */
     public static void processKill(UUID killerUuid, UUID victimUuid) {
         Team killerTeam = getTeam(killerUuid);
@@ -114,11 +112,30 @@ public class TeamManager {
             }
         }
 
-        // Update HUD for all players
-        ScoreboardHud.updateAllPlayers();
+        // Announce to all players
+        announceScoreToAll();
 
         // Check win condition
         checkWinCondition();
+    }
+
+    /**
+     * Announce score to a single player
+     */
+    private static void announceScore(PlayerRef playerRef) {
+        playerRef.sendMessage(Message.raw("[TDM] Score - RED: " + redKills + " | BLUE: " + blueKills + " (First to " + KILLS_TO_WIN + " wins)"));
+    }
+
+    /**
+     * Announce score to all TDM players
+     */
+    private static void announceScoreToAll() {
+        String scoreMsg = "[TDM] Score - RED: " + redKills + " | BLUE: " + blueKills;
+        for (PlayerRef playerRef : Universe.get().getPlayers()) {
+            if (getTeam(playerRef.getUuid()) != null) {
+                playerRef.sendMessage(Message.raw(scoreMsg));
+            }
+        }
     }
 
     /**
@@ -144,7 +161,7 @@ public class TeamManager {
      */
     private static void announceWinner(Team winner) {
         String winnerName = (winner == Team.RED) ? "RED" : "BLUE";
-        String message = winnerName + " TEAM WINS! Final Score: Red " + redKills + " - Blue " + blueKills;
+        String message = "[TDM] " + winnerName + " TEAM WINS! Final Score: Red " + redKills + " - Blue " + blueKills;
 
         for (PlayerRef playerRef : Universe.get().getPlayers()) {
             if (getTeam(playerRef.getUuid()) != null) {
@@ -161,7 +178,6 @@ public class TeamManager {
         for (PlayerRef playerRef : Universe.get().getPlayers()) {
             UUID playerId = playerRef.getUuid();
             if (getTeam(playerId) != null) {
-                ScoreboardHud.hideFromPlayer(playerRef);
                 WorldUtil.teleportToLobby(playerRef);
             }
         }
@@ -207,9 +223,6 @@ public class TeamManager {
         return blueKills;
     }
 
-    /**
-     * Reset kills (for new match)
-     */
     public static void resetKills() {
         redKills = 0;
         blueKills = 0;

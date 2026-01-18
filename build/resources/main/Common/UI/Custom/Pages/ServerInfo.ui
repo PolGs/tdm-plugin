@@ -1,0 +1,18 @@
+Group {
+  LayoutMode: Top;
+  Anchor: (Top: 10, Left: 10, Width: 280, Height: 50);
+  Background: #000000(0.6);
+  Padding: (Horizontal: 12, Vertical: 8);
+
+  Label {
+    Text: "Forecast Network";
+    Anchor: (Height: 20);
+    Style: (FontSize: 16, TextColor: #ffffff, RenderBold: true);
+  }
+
+  Label {
+    Text: "fctc.hytaleservers.space";
+    Anchor: (Height: 16);
+    Style: (FontSize: 12, TextColor: #aaaaaa);
+  }
+}

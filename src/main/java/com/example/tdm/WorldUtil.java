@@ -8,7 +8,13 @@ import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.Universe;
 import com.hypixel.hytale.server.core.universe.world.World;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
 public class WorldUtil {
+
+    private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
     // TDM world name
     public static final String TDM_WORLD = "tdm2";
@@ -49,9 +55,28 @@ public class WorldUtil {
 
     /**
      * Teleport player to TDM world at team spawn
+     * First transfers to world, then after 1 second delay teleports to exact position
      */
     public static void teleportToTDM(PlayerRef playerRef, Vector3d spawnPosition) {
-        teleportToWorld(playerRef, TDM_WORLD, spawnPosition);
+        // First: transfer to the world (without specific position)
+        teleportToWorld(playerRef, TDM_WORLD);
+
+        // After 1 second delay: teleport to exact team spawn position
+        scheduler.schedule(() -> {
+            teleportToPosition(playerRef, spawnPosition);
+        }, 1, TimeUnit.SECONDS);
+    }
+
+    /**
+     * Teleport player to a specific position within TDM world
+     */
+    public static void teleportToPosition(PlayerRef playerRef, Vector3d position) {
+        Universe universe = Universe.get();
+        World tdmWorld = universe.getWorld(TDM_WORLD);
+        if (tdmWorld == null) return;
+
+        Transform transform = new Transform(position, new Vector3f(0, 0, 0));
+        universe.resetPlayer(playerRef, playerRef.getHolder(), tdmWorld, transform);
     }
 
     /**
